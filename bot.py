@@ -1,4 +1,3 @@
-import spacy
 import wikipedia
 import logging
 import os
@@ -11,6 +10,7 @@ from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, ContextTypes, filters
 from datetime import datetime
 import tempfile
+from langdetect import detect, LangDetectException
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -24,13 +24,6 @@ CLARIFAI_API_KEY = os.getenv("CLARIFAI_API_KEY")
 
 if not TELEGRAM_TOKEN:
     logging.error("TELEGRAM_TOKEN не задан в переменных окружения")
-    exit(1)
-
-try:
-    nlp = spacy.load("en_core_web_sm")
-    logger.info("spaCy модель загружена")
-except Exception as e:
-    logger.error(f"Не удалось загрузить spaCy: {e}")
     exit(1)
 
 user_context = {}
@@ -60,7 +53,7 @@ RUSSIAN_DESCRIPTIONS = {
     'elephant': """Слон — самое крупное современное наземное животное. Отличается хоботом, бивнями и большими ушами. Существует три вида слонов: африканский саванный слон, африканский лесной слон и азиатский слон. Слоны живут семейными группами во главе со старшей самкой.""",
     'dolphin': """Дельфины — морские млекопитающие из отряда китообразных. Известны своим высоким интеллектом, игривым поведением и способностью к эхолокации. Спят дельфины особым образом: у них спит только одно полушарие мозга, чтобы они могли продолжать дышать и контролировать свое положение в воде.""",
     'lion': """Лев (лат. Panthera leo) — хищное млекопитающее рода пантер. Второй по величине после тигра представитель семейства кошачьих в мире. Единственные кошачьи, живущие в прайдах. Самцы отличаются гривой.""",
-    'tiger': """Тигр (лат. Panthera tigris) — самый крупный и один из самых узнаваемых видов кошачьих. Отличается яркой оранжевой шерстью с черными полосами. Находится под угрозой исчезновения. Обитает в Азии.""",
+    'tiger': """Тигр (лат. Panthera tigris) — самый крупный и один из самых узнаваемых видов кошачьих. Отличается яркой оранжевой шерстью с черными полосами. Находится под угрозом исчезновения. Обитает в Азии.""",
     'mammal': """Млекопитающие — класс позвоночных животных, основной отличительной особенностью которых является вскармливание детёнышей молоком. Другие характерные черты: волосяной покров, теплокровность, наличие диафрагмы и развитой коры головного мозга.""",
     'artificial intelligence': """Искусственный интеллект (ИИ) — это технология создания компьютерных систем, способных выполнять задачи, требующие человеческого интеллекта: распознавание образов, принятие решений, обучение, понимание естественного языка. ИИ используется в медицине, транспорте, финансах и многих других областях.""",
     'question mark': """Вопросительный знак (?) — знак препинания, ставится обычно в конце предложения для выражения вопроса или сомнения. Встречается в печатных книгах с XVI века, однако для выражения вопроса он закрепляется значительно позже, лишь в XVIII веке.""",
@@ -69,9 +62,14 @@ RUSSIAN_DESCRIPTIONS = {
 
 def detect_language(text):
     """Определяет язык текста."""
-    ru_count = len(re.findall(r'[а-яА-ЯёЁ]', text))
-    en_count = len(re.findall(r'[a-zA-Z]', text))
-    return 'ru' if ru_count > en_count else 'en'
+    try:
+        lang = detect(text)
+        return 'ru' if lang == 'ru' else 'en'
+    except LangDetectException:
+        # fallback на регулярки
+        ru_count = len(re.findall(r'[а-яА-ЯёЁ]', text))
+        en_count = len(re.findall(r'[a-zA-Z]', text))
+        return 'ru' if ru_count > en_count else 'en'
 
 def extract_keyphrase(text, lang, user_id=None):
     """Извлекает ключевую фразу из текста."""
