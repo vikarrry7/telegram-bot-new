@@ -1,7 +1,6 @@
 wikipedia==1.4.0
 clarifai==2.6.2
-python-telegram-bot==13.15
+python-telegram-bot==20.7
 python-dotenv==0.20.0
 requests==2.28.1
 langdetect==1.0.9
-imghdr
