@@ -1,4 +1,4 @@
-app = "telegram-bot-vika"  # ← вот эта строка! Замени на уникальное имя
+app = "telegram-bot-new"  # ← вот эта строка! Замени на уникальное имя
 
 [build]
   builder = "paketobuildpacks/builder:base"
