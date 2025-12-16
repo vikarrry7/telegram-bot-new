@@ -1,4 +1,5 @@
 spacy==3.4.0
+--find-links https://github.com/explosion/wheels/releases/tag/release%2F3.4.0
 wikipedia==1.4.0
 clarifai==2.6.2
 python-telegram-bot==13.15
